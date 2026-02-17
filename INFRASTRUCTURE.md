@@ -1,19 +1,292 @@
 # Akilah System Infrastructure
 
-Complete audit of all Firebase/Google Cloud resources across all projects.
+Complete audit of all Firebase/Google Cloud resources and GitHub repositories.
 
 **Last Updated:** February 17, 2026
 **Account:** <google@akilah.io>
+**GitHub:** @incrediblesadi
+
+_
+
+## The CI/CD Build Services Across Clouds:
+
+| Cloud Provider | CI/CD Build Service | What It Does |
+|----------------|---------------------|--------------|
+| **Google Cloud** | **Cloud Build** | Builds containers, runs tests, deploys |
+| **AWS** | **CodeBuild** | Builds containers, runs tests, deploys |
+| **Azure/Microsoft** | **Azure Pipelines** | Builds containers, runs tests, deploys |
+| **GitHub** | **GitHub Actions** | Builds containers, runs tests, deploys |
 
 ---
 
-## ⚠️ CRITICAL FINDINGS
+## AWS Equivalent:
 
-### APIs are NOT automatically enabled
+**AWS CodeBuild** = Cloud Build
+- Part of **AWS CodePipeline** (full CI/CD suite)
+- Spins up build workers
+- Compiles code, builds containers
+- Runs in EC2 instances
+
+**Not Lambda** - Lambda is serverless compute for running apps, not for building them
+
+**Not API Gateway** - That's just routing HTTP requests
+
+---
+
+## Azure/Microsoft Equivalent:
+
+**Azure Pipelines** = Cloud Build = CodeBuild
+- Part of **Azure DevOps**
+- Microsoft-hosted agents (their "runners")
+- Builds, tests, deploys
+
+---
+
+## Full AWS CI/CD Stack:
+
+- **CodeCommit** = GitHub (Git repos)
+- **CodeBuild** = Cloud Build (builds code)
+- **CodeDeploy** = Deployment service
+- **CodePipeline** = Orchestrates all of above
+
+---
+
+## Why They All Exist:
+
+Each cloud wants to **keep you in their ecosystem**:
+- **Google** wants you using Cloud Build → Cloud Run
+- **AWS** wants you using CodeBuild → Lambda/ECS
+- **Azure** wants you using Azure Pipelines → App Service
+- **GitHub** wants you using Actions → anywhere
+
+**Cloud Build = CodeBuild = Azure Pipelines = GitHub Actions**
+
+Better to use the one that integrates best with your existing tools and workflow.
+
+--
+
+## GitHub Infrastructure
+
+### Overview
+
+**Total Repositories:** 36 (12 Public, 24 Private, 7 Forks)
+**Created:** Various dates (oldest: 4 years ago)
+**Primary Language:** JavaScript/TypeScript, Python
+**Infrastructure Repos:** AWS_Buildout, devops_repo, Global_System
+
+### Authentication & Credentials
+
+**GitHub Account:** @incrediblesadi
+**Authentication Status:** ✅ Logged in via keyring
+**Git Protocol:** HTTPS
+**Token Scopes:** `gist`, `read:org`, `repo`
+**Token:** gho_**** (stored securely in keyring)
+
+### GitHub APIs & SDKs
+
+#### REST API
+
+**Status:** ✅ Available
+**Endpoint:** `https://api.github.com`
+**Best For:**
+
+- Simple CRUD operations (create, read, update, delete)
+- Webhook management
+- Repository administration
+- Single resource operations
+- Rate limit: 5,000 requests/hour (authenticated)
+
+**Current Token Capabilities:**
+
+- ✅ `repo` - Full control of private repositories
+- ✅ `read:org` - Read org and team membership
+- ✅ `gist` - Create and manage gists
+
+#### GraphQL API
+
+**Status:** ✅ Available
+**Endpoint:** `https://api.github.com/graphql`
+**Best For:**
+
+- Fetching nested/related data in single request
+- Complex queries across multiple resources
+- Reducing API calls (get exactly what you need)
+- Real-time data with specific fields
+- Rate limit: 5,000 points/hour (varies by query complexity)
+
+**When to Use Each:**
+
+- Use **REST API** for: Webhooks, simple gets, repository settings, deployments
+- Use **GraphQL API** for: Dashboard data, repository stats, bulk queries, nested data
+
+#### Available SDKs
+
+- **Octokit.js** - Official JavaScript SDK for Node.js and browser
+- **PyGithub** - Python library for GitHub API
+- **gh CLI** - Official command-line tool (currently in use)
+- **GitHub Actions SDK** - For workflow automation
+
+### Webhooks & Integrations
+
+**Active Webhooks:** 0 (checked akilahWeb, dashboard - no webhooks configured)
+**Organization Webhooks:** Not checked (requires org admin access)
+
+**Available Webhook Events:**
+
+- Push events (code commits)
+- Pull request events
+- Issues events
+- Deployment events
+- Workflow run events
+- Release events
+
+**Socket Connections:**
+
+- GitHub Actions runners (when workflows execute)
+- Dependabot connections (active on akilahWeb, portal.akilah.io)
+- Copilot connections (active on dashboard, portal.akilah.io)
+
+**Third-party Integrations:**
+
+- ✅ **Dependabot** - Automated dependency updates (akilahWeb, portal.akilah.io)
+- ✅ **GitHub Copilot** - AI code assistance (dashboard, portal.akilah.io)
+- ✅ **GitHub Pages** - Static site hosting (akilahWeb)
+- ❓ Vercel/Netlify - Not detected
+- ❓ Cloud Run CI/CD - Not detected
+
+**Potential Integrations:**
+
+- Firebase App Hosting auto-deploy
+- Cloud Build triggers
+- Slack/Discord notifications
+- Status badges
+
+### GitHub Actions & Workflows
+
+**Repositories with Actions:** 4 of 36 repositories have workflows
+
+#### Active Workflows by Repository
+
+**akilahWeb (2 workflows)**
+
+- Dependabot Updates (active)
+- pages-build-deployment (active)
+
+**dashboard (4 workflows)**
+
+- Auto Update Repo Map (active)
+- Auto File Contents Update (active)
+- Copilot coding agent (active)
+- Copilot code review (active)
+
+**akilahapigateway (5 workflows)**
+
+- Auto file contents (active)
+- Deploy auto tag (active)
+- Deploy to Cloud Run (active) ⭐
+- Deploy status (active)
+- Env sync (active)
+
+**portal.akilah.io (4 workflows)**
+
+- Documentation Validation (disabled - inactivity)
+- Copilot code review (active)
+- Copilot (active)
+- Dependabot Updates (active)
+
+**Workflow Categories:**
+
+- **Deployment:** 1 (Cloud Run deployment in akilahapigateway)
+- **Automation:** 3 (Auto updates, env sync)
+- **Quality:** 3 (Copilot code review, documentation)
+- **Security:** 2 (Dependabot)
+- **CI/CD:** 1 (Deploy to Cloud Run)
+
+**Total Active Workflows:** 14 across 4 repositories
+**Total Disabled Workflows:** 1
+
+---
+
+## GitHub Repositories
+
+**Total Repositories:** 36 (12 Public, 24 Private)
+**Forks:** 7
+
+### All Repositories (Complete List)
+
+| # | Repository | Vis | Updated | Description | Secrets | Actions | Cloud Run | Cloud Func | Firebase | Branches | Webhooks | Deploy Keys | Envs | Issues | PRs | Stars | Size | Language |
+|---|------------|-----|---------|-------------|---------|---------|-----------|------------|----------|----------|----------|-------------|------|--------|-----|-------|------|----------|
+| 1 | [akilahWeb](https://github.com/incrediblesadi/akilahWeb) | Pub | 10m | React - Current | 0 | ❓ | ❌ | ❌ | ✅ Config | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | TS/React |
+| 2 | [dashboard](https://github.com/incrediblesadi/dashboard) | Priv | 14h | New | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 3 | [akilahapigateway](https://github.com/incrediblesadi/akilahapigateway) | Pub | 22h | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 4 | [AkilahDevDash](https://github.com/incrediblesadi/AkilahDevDash) | Priv | 19d | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 5 | [akilahEnterprise](https://github.com/incrediblesadi/akilahEnterprise) | Priv | 25d | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 6 | [portal.akilah.io](https://github.com/incrediblesadi/portal.akilah.io) | Pub | 1mo | Portal | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 7 | [lobe-chat](https://github.com/incrediblesadi/lobe-chat) | Fork | 7mo | AI Chat | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | TS |
+| 8 | [onlook](https://github.com/incrediblesadi/onlook) | Fork | 7mo | Design | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | TS |
+| 9 | [akilah-dashboard](https://github.com/incrediblesadi/akilah-dashboard) | Pub | 8mo | Next+GCB | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | JS |
+| 10 | [akilah-amplify-dashboard](https://github.com/incrediblesadi/akilah-amplify-dashboard) | Pub | 8mo | AWS Amp | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | JS |
+| 11 | [Projects](https://github.com/incrediblesadi/Projects) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 12 | [AWS_Buildout](https://github.com/incrediblesadi/AWS_Buildout) | Pub | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 13 | [AWS_Buildout_Plan](https://github.com/incrediblesadi/AWS_Buildout_Plan) | Pub | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 14 | [AI-Session-Log](https://github.com/incrediblesadi/AI-Session-Log) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 15 | [Global_System](https://github.com/incrediblesadi/Global_System) | Priv | 11mo | All Projects | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 16 | [test-repo](https://github.com/incrediblesadi/test-repo) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 17 | [self-centered-intelligence](https://github.com/incrediblesadi/self-centered-intelligence) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 18 | [Central-Intelligence-Hub](https://github.com/incrediblesadi/Central-Intelligence-Hub) | Priv | 11mo | Memory Sys | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 19 | [incredible_ai](https://github.com/incrediblesadi/incredible_ai) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 20 | [devops_repo](https://github.com/incrediblesadi/devops_repo) | Priv | 11mo | CDK/Terraform | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 21 | [global_system_logs](https://github.com/incrediblesadi/global_system_logs) | Priv | 11mo | Event Logs | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 22 | [personal_knowledge_repo](https://github.com/incrediblesadi/personal_knowledge_repo) | Priv | 11mo | Knowledge | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 23 | [job_search_ai](https://github.com/incrediblesadi/job_search_ai) | Priv | 11mo | Job AI | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 24 | [SadEye](https://github.com/incrediblesadi/SadEye) | Priv | 11mo | SADI Mem | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 25 | [incredible_ai_sadi](https://github.com/incrediblesadi/incredible_ai_sadi) | Priv | 11mo | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 26 | [amplify-vite-react-template](https://github.com/incrediblesadi/amplify-vite-react-template) | Priv | 11mo | Amp Gen2 | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | TS |
+| 27 | [AI-Logs](https://github.com/incrediblesadi/AI-Logs) | Priv | 12mo | Workflows | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 28 | [AI-Sadi](https://github.com/incrediblesadi/AI-Sadi) | Priv | 1y | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 29 | [incrediblesadi.com](https://github.com/incrediblesadi/incrediblesadi.com) | Priv | 1y | - | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 30 | [LibreChat](https://github.com/incrediblesadi/LibreChat) | Fork | 1y | ChatGPT | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | JS |
+| 31 | [openai-cookbook](https://github.com/incrediblesadi/openai-cookbook) | Fork | 1y | OpenAI | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | Python |
+| 32 | [Halal_Way](https://github.com/incrediblesadi/Halal_Way) | Priv | 1y | Work | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 33 | [halalway.xyz-](https://github.com/incrediblesadi/halalway.xyz-) | Priv | 1y | THG Portal | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+| 34 | [SwiftlLLM](https://github.com/incrediblesadi/SwiftlLLM) | Fork | 1y | Swift LLM | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | Swift |
+| 35 | [amplify-ui-dashboard](https://github.com/incrediblesadi/amplify-ui-dashboard) | Fork | 1y | React Dash | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | React |
+| 36 | [aws-workflows-on-github](https://github.com/incrediblesadi/aws-workflows-on-github) | Fork | 4y | AWS CI/CD | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ | ❓ |
+
+**Legend:**
+
+- **Vis** = Visibility (Pub=Public, Priv=Private, Fork=Forked)
+- **Secrets** = GitHub Secrets count (API keys, tokens)
+- **Actions** = GitHub Actions/Workflows count
+- **Cloud Run** = Services deployed from this repo to GCP Cloud Run
+- **Cloud Func** = Cloud Functions deployed from this repo to GCP
+- **Firebase** = Firebase services configured/used (Hosting, Realtime DB, etc.)
+- **Branches** = Number of branches in repository
+- **Webhooks** = Active webhooks configured for the repo
+- **Deploy Keys** = SSH deploy keys for automated deployments
+- **Envs** = Environments (staging, production, etc.)
+- **Issues** = Open issues count
+- **PRs** = Open pull requests count
+- **Stars** = GitHub stars (for public repos)
+- **Size** = Repository size (KB/MB)
+- ❓ = To be scanned
+- ✅ = Enabled/Configured/Present
+- ❌ = Not used/Not configured
+- Number = Actual count
+
+**Note:** Repository data will be populated via automated scanning script.
+
+---
+
+## Google Cloud Infrastructure
+
+### ⚠️ CRITICAL FINDINGS
+
+#### APIs are NOT automatically enabled
 
 Each project has different APIs enabled based on what services were used/configured. Not all Google Cloud APIs are enabled by default.
 
-### Project: `akilahstack` - 3 Cloud Functions FAILED
+#### Project: `akilahstack` - 3 Cloud Functions FAILED
 
 - **akilah** - FAILED (HTTP Trigger, us-central1, 2nd gen)
 - **systemCheck** - FAILED (HTTP Trigger, us-central1, 2nd gen)
