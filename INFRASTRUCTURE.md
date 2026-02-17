@@ -8,7 +8,7 @@ Complete audit of all Firebase/Google Cloud resources and GitHub repositories.
 
 _
 
-## The CI/CD Build Services Across Clouds:
+## The CI/CD Build Services Across Clouds
 
 | Cloud Provider | CI/CD Build Service | What It Does |
 |----------------|---------------------|--------------|
@@ -19,9 +19,10 @@ _
 
 ---
 
-## AWS Equivalent:
+## AWS Equivalent
 
 **AWS CodeBuild** = Cloud Build
+
 - Part of **AWS CodePipeline** (full CI/CD suite)
 - Spins up build workers
 - Compiles code, builds containers
@@ -33,16 +34,17 @@ _
 
 ---
 
-## Azure/Microsoft Equivalent:
+## Azure/Microsoft Equivalent
 
 **Azure Pipelines** = Cloud Build = CodeBuild
+
 - Part of **Azure DevOps**
 - Microsoft-hosted agents (their "runners")
 - Builds, tests, deploys
 
 ---
 
-## Full AWS CI/CD Stack:
+## Full AWS CI/CD Stack
 
 - **CodeCommit** = GitHub (Git repos)
 - **CodeBuild** = Cloud Build (builds code)
@@ -51,9 +53,10 @@ _
 
 ---
 
-## Why They All Exist:
+## Why They All Exist
 
 Each cloud wants to **keep you in their ecosystem**:
+
 - **Google** wants you using Cloud Build → Cloud Run
 - **AWS** wants you using CodeBuild → Lambda/ECS
 - **Azure** wants you using Azure Pipelines → App Service
@@ -871,3 +874,836 @@ These functions exist but are in FAILED state and need attention!
 - roles/storage.objectViewer
 
 </details>
+
+---
+
+## Connection Types Your SDK Can Manage
+
+### 1. **HTTP/REST** (Most common)
+
+```javascript
+class AkilahSDK {
+  async httpConnection(endpoint) {
+    // REST API calls
+    const response = await fetch('https://api.github.com/repos');
+    return response.json();
+  }
+}
+```
+
+### 2. **GraphQL** (Structured queries)
+
+```javascript
+async graphqlConnection(query) {
+  // GraphQL endpoint
+  const response = await this.octokit(query);
+  return response;
+}
+```
+
+### 3. **WebSocket** (Real-time, bidirectional)
+
+```javascript
+async websocketConnection() {
+  const ws = new WebSocket('wss://stream.github.com');
+  ws.on('message', (data) => {
+    // Real-time events
+  });
+}
+```
+
+### 4. **gRPC** (High performance, binary)
+
+```javascript
+async grpcConnection() {
+  const client = new CloudRunClient();
+  // Protocol buffers, faster than REST
+  return client.listServices();
+}
+```
+
+### 5. **Pub/Sub** (Event-driven, async)
+
+```javascript
+async pubsubConnection() {
+  const { PubSub } = require('@google-cloud/pubsub');
+  const pubsub = new PubSub();
+  // Subscribe to events
+  const subscription = pubsub.subscription('my-topic');
+}
+```
+
+### 6. **SSH/Git** (Direct repository access)
+
+```javascript
+async sshConnection() {
+  const git = require('simple-git');
+  // Direct git operations
+  await git.clone('git@github.com:user/repo.git');
+}
+```
+
+## Your Unified SDK with Dynamic Connections
+
+```javascript
+class AkilahSDK {
+  constructor(config) {
+    this.connections = {
+      rest: new RESTClient(config),
+      graphql: new GraphQLClient(config),
+      websocket: new WebSocketClient(config),
+      grpc: new GRPCClient(config),
+      pubsub: new PubSubClient(config)
+    };
+  }
+
+  // Dynamically choose connection type
+  async connect(type, operation) {
+    switch(type) {
+      case 'rest':
+        return this.connections.rest.execute(operation);
+      case 'graphql':
+        return this.connections.graphql.query(operation);
+      case 'websocket':
+        return this.connections.websocket.stream(operation);
+      case 'grpc':
+        return this.connections.grpc.call(operation);
+      case 'pubsub':
+        return this.connections.pubsub.publish(operation);
+    }
+  }
+
+  // Intelligent routing - pick best connection type
+  async smartConnect(operation) {
+    if (operation.needsRealtime) return this.connect('websocket', operation);
+    if (operation.complexQuery) return this.connect('graphql', operation);
+    if (operation.highPerformance) return this.connect('grpc', operation);
+    return this.connect('rest', operation); // Default
+  }
+}
+```
+
+## Example Usage
+
+```javascript
+const akilah = new AkilahSDK(config);
+
+// Manual control
+await akilah.connect('graphql', { query: '{ repos }' });
+await akilah.connect('websocket', { stream: 'deployments' });
+await akilah.connect('grpc', { service: 'CloudRun' });
+
+// Smart routing
+await akilah.smartConnect({
+  action: 'fetchRepos',
+  complexQuery: true  // Automatically uses GraphQL
+});
+```
+
+**Your SDK becomes a smart router that picks the right connection type based on the operation!**
+
+## Single Server, Multiple Connection Types
+
+```javascript
+// ONE Cloud Run service handling everything
+const express = require('express');
+const { ApolloServer } = require('apollo-server-express');
+const WebSocket = require('ws');
+const { Server: GRPCServer } = require('@grpc/grpc-js');
+
+const app = express();
+
+// 1. REST endpoints
+app.get('/repos', async (req, res) => {
+  res.json(await akilahSDK.getRepos());
+});
+
+// 2. GraphQL endpoint (same server)
+const apollo = new ApolloServer({ typeDefs, resolvers });
+await apollo.start();
+apollo.applyMiddleware({ app, path: '/graphql' });
+
+// 3. WebSocket (same server)
+const server = app.listen(8080);
+const wss = new WebSocket.Server({ server, path: '/ws' });
+wss.on('connection', (ws) => {
+  ws.send('Real-time updates!');
+});
+
+// 4. gRPC (same process, different port)
+const grpcServer = new GRPCServer();
+grpcServer.bindAsync('0.0.0.0:50051', ...);
+```
+
+## One Cloud Run Service = All Connections
+
+```
+Your Cloud Run Service (Port 8080)
+├── /repos          → REST API
+├── /graphql        → GraphQL API
+├── /ws             → WebSocket
+└── :50051          → gRPC (different port)
+
+All running in ONE container!
+```
+
+## Your SDK's Role
+
+Your SDK **uses** these connection types to talk to **external services**, not create servers:
+
+```javascript
+// Your SDK makes OUTBOUND connections
+class AkilahSDK {
+  // Connect TO GitHub (REST)
+  async getGitHubRepos() {
+    return fetch('https://api.github.com/repos');
+  }
+
+  // Connect TO GitHub (GraphQL)
+  async queryGitHub(query) {
+    return this.octokit(query);
+  }
+
+  // Connect TO Google Cloud (gRPC)
+  async getCloudRunServices() {
+    return this.cloudRunClient.listServices();
+  }
+}
+```
+
+## Architecture
+
+```
+Clients → Your Cloud Run Server → Your SDK → External APIs
+          (Handles REST/GraphQL/WS)  (REST/GraphQL/gRPC)
+                                     ├→ GitHub API
+                                     ├→ Google Cloud API
+                                     └→ Firebase API
+```
+
+**Answer: ONE server can handle multiple INBOUND connection types. Your SDK handles multiple OUTBOUND connection types. No need for separate servers!**
+
+---
+
+## Single Endpoint Architecture
+
+```javascript
+// ONE endpoint to rule them all
+const express = require('express');
+const AkilahSDK = require('./akilah-sdk');
+
+const app = express();
+const akilah = new AkilahSDK();
+
+// Single unified endpoint
+app.post('/api', async (req, res) => {
+  const { action, params } = req.body;
+
+  switch(action) {
+    case 'getRepos':
+      return res.json(await akilah.github.getRepos());
+
+    case 'deployToCloudRun':
+      return res.json(await akilah.cloudRun.deploy(params));
+
+    case 'updateInfrastructure':
+      return res.json(await akilah.updateInfrastructureDocs());
+
+    case 'syncAll':
+      return res.json(await akilah.syncEverything());
+  }
+});
+
+app.listen(8080);
+```
+
+## Usage
+
+```bash
+# ONE endpoint for everything
+curl https://your-service.run.app/api \
+  -d '{"action": "getRepos"}'
+
+curl https://your-service.run.app/api \
+  -d '{"action": "deployToCloudRun", "params": {"service": "akilahWeb"}}'
+
+curl https://your-service.run.app/api \
+  -d '{"action": "updateInfrastructure"}'
+```
+
+## Architecture
+Main Option:
+Great insights! Let me clarify a few things and then we can commit what we have:
+
+## Quick Clarifications:
+
+### 1. **GCP = Google Cloud Platform**
+Your Firebase projects, Cloud Run, Pub/Sub - all Google Cloud Platform services.
+
+### 2. **"Pops Up" = Pub/Sub (Google Cloud Pub/Sub)**
+The messaging queue system - "Publish/Subscribe"
+
+### 3. **Your Refined Architecture:**
+
+```
+Request → API Gateway → Staging → Intent Router → Approval → Manager → Workflow
+                                    (Pub/Sub)      (review)  (orchestrate) (execute)
+```
+
+You're adding:
+- **Intent Router**: Analyzes request, determines workflow type
+- **Approval Layer**: AI model can't just execute, needs approval
+- **Manager**: Orchestrates multiple jobs dynamically
+- **Pass-through for WebSocket**: Pre-defined persistent
+- connections bypass full workflow
+
+---
+Opton 2: Simplified Architecture (if you want to skip approval and manager for now)
+```
+Client → https://your-service.run.app/api → AkilahSDK
+                                              ├→ GitHub
+                                              ├→ Cloud Run
+                                              ├→ Firebase
+                                              └→ Everything else
+```
+
+
+---
+
+## Workflow-Based Architecture with Staging
+
+#### All Requests → Staging → Workflows → Processing
+
+```javascript
+const express = require('express');
+const { WorkflowEngine } = require('./workflow-engine');
+const { StagingQueue } = require('./staging-queue');
+
+const app = express();
+const staging = new StagingQueue();
+const workflows = new WorkflowEngine();
+
+// STAGING LAYER - receives ALL requests
+app.post('/api', async (req, res) => {
+  const { action, params } = req.body;
+
+  // 1. Receive in staging
+  const jobId = await staging.receive({
+    type: 'rest',
+    action,
+    params,
+    timestamp: Date.now()
+  });
+
+  // 2. Queue for workflow processing
+  await staging.queue(jobId);
+
+  // 3. Return immediately (async processing)
+  res.json({ jobId, status: 'queued' });
+});
+
+// GraphQL - also goes through staging
+app.post('/graphql', async (req, res) => {
+  const jobId = await staging.receive({
+    type: 'graphql',
+    query: req.body.query,
+    timestamp: Date.now()
+  });
+
+  await staging.queue(jobId);
+  res.json({ jobId, status: 'queued' });
+});
+
+// WebSocket - persistent but still stages messages
+const server = app.listen(8080);
+const wss = new WebSocket.Server({ server, path: '/ws' });
+
+wss.on('connection', (ws) => {
+  ws.on('message', async (msg) => {
+    const jobId = await staging.receive({
+      type: 'websocket',
+      message: msg,
+      connectionId: ws.id,
+      timestamp: Date.now()
+    });
+
+    await staging.queue(jobId);
+    ws.send({ jobId, status: 'queued' });
+  });
+});
+
+// WORKFLOW ENGINE - processes staged requests
+staging.on('job-ready', async (job) => {
+  // Dynamic workflow routing
+  if (job.action === 'getRepos') {
+    await workflows.run('github-fetch-workflow', job);
+  } else if (job.action === 'deployToCloudRun') {
+    await workflows.run('cloud-deploy-workflow', job);
+  } else {
+    await workflows.run('default-workflow', job);
+  }
+});
+```
+
+### Staging Queue Implementation
+
+```javascript
+class StagingQueue {
+  constructor() {
+    this.queue = new Map();
+    this.pubsub = new PubSub(); // Google Cloud Pub/Sub
+  }
+
+  async receive(request) {
+    const jobId = crypto.randomUUID();
+
+    // Store in staging
+    this.queue.set(jobId, {
+      ...request,
+      status: 'received',
+      receivedAt: Date.now()
+    });
+
+    return jobId;
+  }
+
+  async queue(jobId) {
+    const job = this.queue.get(jobId);
+    job.status = 'queued';
+
+    // Publish to Pub/Sub for workflow processing
+    await this.pubsub.topic('akilah-jobs').publish({
+      jobId,
+      ...job
+    });
+  }
+}
+```
+
+### Workflow Engine Implementation
+
+```javascript
+class WorkflowEngine {
+  constructor() {
+    this.workflows = new Map();
+    this.registerWorkflows();
+  }
+
+  registerWorkflows() {
+    // Individual workflows for specific actions
+    this.workflows.set('github-fetch-workflow', async (job) => {
+      const repos = await akilahSDK.github.getRepos();
+      await this.completeJob(job.jobId, { repos });
+    });
+
+    this.workflows.set('cloud-deploy-workflow', async (job) => {
+      const deployment = await akilahSDK.cloudRun.deploy(job.params);
+      await this.completeJob(job.jobId, { deployment });
+    });
+
+    // Dynamic workflow for unknown actions
+    this.workflows.set('default-workflow', async (job) => {
+      const result = await akilahSDK.smartConnect(job);
+      await this.completeJob(job.jobId, result);
+    });
+  }
+
+  async run(workflowName, job) {
+    const workflow = this.workflows.get(workflowName);
+    if (!workflow) throw new Error(`Workflow ${workflowName} not found`);
+
+    await workflow(job);
+  }
+
+  async completeJob(jobId, result) {
+    // Store result, notify client, cleanup
+    await this.pubsub.topic('akilah-results').publish({
+      jobId,
+      result,
+      completedAt: Date.now()
+    });
+  }
+}
+```
+
+### Updated Architecture Flow
+
+```
+Client Request
+     ↓
+[STAGING LAYER]
+├── Receive (all requests)
+├── Validate
+├── Queue (Pub/Sub)
+└── Return jobId
+     ↓
+[WORKFLOW ENGINE]
+├── Subscribe to jobs
+├── Route to workflow:
+│   ├── Individual workflow (github-fetch-workflow)
+│   ├── Individual workflow (cloud-deploy-workflow)
+│   └── Dynamic workflow (default-workflow)
+├── Process via AkilahSDK
+└── Publish results
+     ↓
+[CLIENT RETRIEVES RESULT]
+```
+
+### Key Differences with Staging
+
+| Aspect | Old Direct Processing | New Staging + Workflows |
+|--------|----------------------|-------------------------|
+| **Request Handling** | Immediate processing | Receive → Queue → Process |
+| **Response** | Synchronous result | Job ID (async) |
+| **REST** | `/api` → direct response | `/api` → staging → workflow |
+| **GraphQL** | `/graphql` → direct response | `/graphql` → staging → workflow |
+| **WebSocket** | Direct message handling | Message → staging → workflow → push result |
+| **Processing** | Inline code | Dedicated workflows |
+| **Scalability** | Limited by server | Unlimited (Pub/Sub queue) |
+| **Retry Logic** | Manual implementation | Built-in workflow retry |
+| **Monitoring** | Request logs only | Full job lifecycle tracking |
+
+### Benefits
+
+✅ **All requests go through staging** - uniform handling
+✅ **Workflow-based processing** - modular, testable, reusable
+✅ **Dynamic workflow routing** - smart action detection
+✅ **Async by default** - no blocking, infinite scalability
+✅ **Individual workflows** - specialized processing per action
+✅ **Job tracking** - full visibility into request lifecycle
+
+---
+
+## WebSocket + Staging Architecture (Distributed Components)
+
+### The Challenge
+
+Your components are distributed:
+
+- **Gateway** (Cloud Run) - Staging + endpoints
+- **Chat App** (anywhere) - Client application
+- **Data Storage** (Firestore/elsewhere) - Persistent data
+
+**Question:** How does WebSocket maintain persistent connection through staging?
+
+### The Solution: Connection Registry
+
+```javascript
+// GATEWAY - WebSocket connection manager
+class WebSocketConnectionManager {
+  constructor() {
+    this.connections = new Map(); // connectionId → ws
+    this.subscriptions = new Map(); // jobId → connectionId
+  }
+
+  // 1. Chat app connects to gateway
+  registerConnection(ws) {
+    const connectionId = crypto.randomUUID();
+    this.connections.set(connectionId, ws);
+
+    // Keep connection alive
+    ws.on('close', () => {
+      this.connections.delete(connectionId);
+      console.log(`Connection ${connectionId} closed`);
+    });
+
+    return connectionId;
+  }
+
+  // 2. Subscribe connection to job results
+  subscribeToJob(connectionId, jobId) {
+    this.subscriptions.set(jobId, connectionId);
+  }
+
+  // 3. Push result back to specific connection
+  pushResult(jobId, result) {
+    const connectionId = this.subscriptions.get(jobId);
+    const ws = this.connections.get(connectionId);
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(result));
+    }
+  }
+}
+
+// GATEWAY - WebSocket server with staging integration
+const wsManager = new WebSocketConnectionManager();
+const staging = new StagingQueue();
+const wss = new WebSocket.Server({ server, path: '/ws' });
+
+wss.on('connection', (ws) => {
+  // 1. Register persistent connection
+  const connectionId = wsManager.registerConnection(ws);
+
+  // Send connection confirmation
+  ws.send(JSON.stringify({
+    type: 'connected',
+    connectionId
+  }));
+
+  // 2. Handle incoming messages from chat app
+  ws.on('message', async (msg) => {
+    const data = JSON.parse(msg);
+
+    // Stage the message
+    const jobId = await staging.receive({
+      type: 'websocket',
+      action: data.action,
+      message: data.message,
+      connectionId,
+      timestamp: Date.now()
+    });
+
+    // Subscribe connection to job results
+    wsManager.subscribeToJob(connectionId, jobId);
+
+    // Queue for processing
+    await staging.queue(jobId);
+
+    // Acknowledge message received
+    ws.send(JSON.stringify({
+      type: 'queued',
+      jobId
+    }));
+  });
+});
+
+// WORKFLOW ENGINE - Processes and pushes results
+staging.on('job-ready', async (job) => {
+  // Process through workflow
+  const workflow = workflows.get('chat-workflow');
+  const result = await workflow.run(job);
+
+  // Push result back to WebSocket connection
+  if (job.type === 'websocket') {
+    wsManager.pushResult(job.jobId, {
+      type: 'result',
+      jobId: job.jobId,
+      data: result
+    });
+  }
+});
+```
+
+### Architecture Flow (Distributed)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CHAT APP (Client)                        │
+│  User types message → Send via WebSocket                    │
+└────────────────────┬────────────────────────────────────────┘
+                     │ Persistent WebSocket Connection
+                     │ wss://your-gateway.run.app/ws
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│              GATEWAY (Cloud Run Server)                     │
+│                                                              │
+│  ┌─────────────────────────────────────────┐                │
+│  │  WebSocket Connection Manager           │                │
+│  │  • Store: connectionId → ws (in memory) │                │
+│  │  • Keep connection OPEN                 │                │
+│  └─────────────────────────────────────────┘                │
+│                     ↓                                        │
+│  ┌─────────────────────────────────────────┐                │
+│  │  Staging Layer                          │                │
+│  │  • Receive message                      │                │
+│  │  • Assign jobId                         │                │
+│  │  • Link: jobId → connectionId           │                │
+│  │  • Queue to Pub/Sub                     │                │
+│  └─────────────────────────────────────────┘                │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ Google Cloud Pub/Sub
+                     │ Topic: akilah-jobs
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│           WORKFLOW ENGINE (Cloud Function/Run)              │
+│                                                              │
+│  • Subscribe to akilah-jobs                                 │
+│  • Process message via workflow                             │
+│  • Access data from Firestore/Database                      │
+│  • Publish result to akilah-results                         │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ Google Cloud Pub/Sub
+                     │ Topic: akilah-results
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│              GATEWAY (Result Listener)                      │
+│                                                              │
+│  • Subscribe to akilah-results                              │
+│  • Lookup: jobId → connectionId → ws                        │
+│  • Push result to WebSocket connection                      │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     │ WebSocket (same persistent connection)
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 CHAT APP (Receives Result)                  │
+│  Display message to user                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+#### 1. **Connection Registry (Gateway)**
+
+```javascript
+// In-memory connection tracking
+connections: Map {
+  'conn-123' → WebSocket {readyState: OPEN},
+  'conn-456' → WebSocket {readyState: OPEN}
+}
+
+subscriptions: Map {
+  'job-abc' → 'conn-123',
+  'job-def' → 'conn-456'
+}
+```
+
+#### 2. **Staging Queue (Gateway)**
+
+```javascript
+// Temporary job storage + Pub/Sub publishing
+staging.receive({
+  type: 'websocket',
+  message: 'Hello from chat app',
+  connectionId: 'conn-123'
+}) → jobId: 'job-abc'
+```
+
+#### 3. **Data Storage (Firestore/Realtime DB)**
+
+```javascript
+// Workflow accesses data
+const workflow = async (job) => {
+  const chatHistory = await firestore
+    .collection('chats')
+    .doc(job.connectionId)
+    .get();
+
+  // Process message with history
+  const response = await processMessage(job.message, chatHistory);
+
+  // Save to database
+  await firestore
+    .collection('chats')
+    .doc(job.connectionId)
+    .collection('messages')
+    .add(response);
+
+  return response;
+};
+```
+
+### Complete Message Flow
+
+```javascript
+// STEP 1: Chat app sends message
+chatApp.send({
+  action: 'sendMessage',
+  message: 'Hello!'
+});
+
+// STEP 2: Gateway receives via WebSocket
+// - Connection already OPEN (persistent)
+// - connectionId: 'conn-123'
+
+// STEP 3: Stage message
+jobId = 'job-abc'
+staging.queue({
+  type: 'websocket',
+  message: 'Hello!',
+  connectionId: 'conn-123',
+  jobId: 'job-abc'
+});
+
+// STEP 4: Pub/Sub delivers to workflow
+workflow.subscribe('akilah-jobs', async (job) => {
+  // Access Firestore
+  const data = await firestore.collection('chats').get();
+
+  // Process
+  const result = await processMessage(job.message, data);
+
+  // Publish result
+  pubsub.topic('akilah-results').publish({
+    jobId: 'job-abc',
+    result
+  });
+});
+
+// STEP 5: Gateway receives result
+resultListener.subscribe('akilah-results', (result) => {
+  // Lookup connection
+  const connectionId = subscriptions.get('job-abc'); // 'conn-123'
+  const ws = connections.get('conn-123');
+
+  // Push to SAME WebSocket connection
+  ws.send(JSON.stringify(result));
+});
+
+// STEP 6: Chat app receives result (same connection!)
+chatApp.onmessage = (msg) => {
+  console.log('Received:', msg.data);
+};
+```
+
+### Why This Works Across Distributed Components
+
+✅ **WebSocket stays at Gateway** - Connection never leaves Cloud Run
+✅ **Staging is stateless** - Just queues to Pub/Sub
+✅ **Workflows are distributed** - Can run anywhere (Cloud Functions, Cloud Run)
+✅ **Data is separate** - Firestore/Database accessed by workflows
+✅ **Connection tracking** - In-memory Map at Gateway links jobId → connectionId → ws
+✅ **Pub/Sub bridges gap** - Asynchronous communication between Gateway ↔ Workflows
+
+### Scaling Considerations
+
+**Problem:** If Gateway restarts, in-memory connections are lost.
+
+**Solution:** Use Cloud Memorystore (Redis) for connection registry:
+
+```javascript
+class WebSocketConnectionManager {
+  constructor() {
+    this.redis = new Redis(); // Cloud Memorystore
+  }
+
+  async registerConnection(ws, connectionId) {
+    // Store in Redis (survives restarts)
+    await this.redis.hset('ws-connections', connectionId, {
+      serverId: process.env.INSTANCE_ID,
+      connectedAt: Date.now()
+    });
+
+    // Keep local reference
+    this.localConnections.set(connectionId, ws);
+  }
+
+  async pushResult(jobId, result) {
+    // Lookup in Redis
+    const connectionId = await this.redis.hget('subscriptions', jobId);
+    const connInfo = await this.redis.hget('ws-connections', connectionId);
+
+    // If on this server, push directly
+    if (connInfo.serverId === process.env.INSTANCE_ID) {
+      const ws = this.localConnections.get(connectionId);
+      ws.send(JSON.stringify(result));
+    } else {
+      // Otherwise, publish to specific server via Pub/Sub
+      await pubsub.topic(`server-${connInfo.serverId}`).publish({
+        connectionId,
+        result
+      });
+    }
+  }
+}
+```
+
+**Now your WebSocket + Staging architecture works across:**
+
+- Multiple Gateway instances (Cloud Run auto-scaling)
+- Distributed workflows (Cloud Functions)
+- Separate data storage (Firestore/Realtime DB)
+- Geographic regions (multi-region deployment)
